@@ -1,6 +1,9 @@
 package com.BusReservation;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Scanner;
@@ -44,17 +47,68 @@ public class PassangerRegistration {
 	        }
 		  
 	}
+	
+    public static String execute(String username, String password) {
+    	DbConnection dbConnection=new DbConnection();
+		 Connection conn = dbConnection.creatConnection();
+        String jdbc_template = "INSERT INTO users (user_name, password) VALUES (?, ?)";
+        
+        try (PreparedStatement pst = conn.prepareStatement(jdbc_template)) {
+            pst.setString(1, username);  
+            pst.setString(2, password); 
+            int rowsAffected = pst.executeUpdate();
+            Boolean finals=rowsAffected > 0;
+            return finals.toString();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return "false"; 
+        }
+        finally {
+				 dbConnection .closeConnection(conn);
+        }
+       
+    }
 
 	public static void usersList() {
 		 try {
+			 DbConnection dbConnection=new DbConnection();
+			 Connection conn = dbConnection.creatConnection();
+			 String final_response = executeView(conn);
 			 System.out.println("\nRegistered Users:");
-			 userDetails.forEach((username, password) -> System.out.println(" - " + username));
+			System.out.println(" - " + final_response);
+			 
 			 System.out.println();
 	        } catch (Exception e) {
 	            System.out.println("An error occurred while viewing user List: " + e.getMessage());
 	        }
 		
 	}
+	
+	 public static String executeView(Connection conn) {
+	    	String jdbc_template = "SELECT * FROM users"; 
+
+	    	try (PreparedStatement pst = conn.prepareStatement(jdbc_template)) {
+	    	    ResultSet rs = pst.executeQuery();  
+	    	    
+	    	    StringBuilder result = new StringBuilder();
+	    	    while (rs.next()) {
+	    	        int id = rs.getInt("id");
+	    	        String username = rs.getString("user_name");  
+	    	        String password = rs.getString("password");  
+
+	    	        result.append("ID: ").append(id)
+	    	              .append(", Username: ").append(username)
+	    	              .append(", Password: ").append(password)
+	    	              .append("\n");
+	    	    }
+
+	    	    return result.toString();
+	    	} catch (SQLException e) {
+	    	    e.printStackTrace();  
+	    	    return "false";
+	    }
+	    }
+
 
 	public static void deleteUser() {
 		try {
@@ -98,8 +152,10 @@ public class PassangerRegistration {
 
 	public static void storedDetails(String userName, String userPassword) {
 		 try {
-				DbConnection dbConnection=new DbConnection();
-				String final_response=	dbConnection.execute(userName, userPassword);
+				
+				 
+				 String final_response = execute(userName, userPassword);
+//				String final_response=	dbConnection.execute(userName, userPassword);
 				
 				
 				System.out.println("final_response   :"+final_response);
